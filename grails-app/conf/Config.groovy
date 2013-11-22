@@ -12,13 +12,11 @@
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS    * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * 
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see http://www.gnu.org/licenses/.
  * 
  *
  ******************************************************************/
   
-
-
 /**
  * Running externalized configuration
  * Assuming the following configuration files
@@ -27,36 +25,14 @@
  * - dataSource location set path by system environment variable '<APP_NAME>_DATASOURCE_LOCATION'
  */
 
-import grails.plugins.springsecurity.SecurityConfigType
 
-grails.plugins.springsecurity.successHandler.defaultTargetUrl = "/transmart"
-
-grails.plugins.springsecurity.rejectIfNoRule = true
-grails.plugins.springsecurity.userLookup.userDomainClassName = 'org.transmart.searchapp.AuthUser'
-grails.plugins.springsecurity.userLookup.authorityJoinClassName = 'org.transmart.searchapp.AuthUserRole'
-grails.plugins.springsecurity.authority.className = 'org.transmart.searchapp.Role'
-grails.plugins.springsecurity.requestMap.className = 'org.transmart.searchapp.Requestmap'
-grails.plugins.springsecurity.securityConfigType = SecurityConfigType.Requestmap
-//grails.plugins.springsecurity.interceptUrlMap = [
-//        '/login/**'                   : ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/css/**'                     : ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/js/**'                      : ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/images/**'                  : ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/static/**'                  : ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/search/loadAJAX**'          : ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/analysis/getGenePatternFile': ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/analysis/getTestFile'       : ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/requestmap/**'              : ['ROLE_ADMIN'],
-//        '/role/**'                    : ['ROLE_ADMIN'],
-//        '/authUser/**'                : ['ROLE_ADMIN'],
-//        '/secureObject/**'            : ['ROLE_ADMIN'],
-//        '/accessLog/**'               : ['ROLE_ADMIN'],
-//        '/authUserSecureAccess/**'    : ['ROLE_ADMIN'],
-//        '/secureObjectPath/**'        : ['ROLE_ADMIN'],
-//        '/userGroup/**'               : ['ROLE_ADMIN'],
-//        '/secureObjectAccess/**'      : ['ROLE_ADMIN'],
-//        '/**'                         : ['IS_AUTHENTICATED_REMEMBERED'], // must be last
-//]
+/* For some reason, the externalized config files are run with a different
+ * binding. None of the variables basedir, baseFile, baseName, grailsSettings,
+ * ... are available; the binding will actually be the root config object.
+ * So store the current binding in the config object so the externalized
+ * config has access to the variables mentioned.
+ */
+org.transmart.originalConfigBinding = getBinding()
 
 grails.config.locations = []
 def defaultConfigFiles = [
@@ -67,8 +43,11 @@ def defaultConfigFiles = [
 defaultConfigFiles.each { filePath ->
 	def f = new File(filePath)
 	if (f.exists()) {
+        if (f.name.equals('RModulesConfig.groovy')) {
+            println "[WARN] RModulesConfig.groovy is deprecated, it has been merged into Config.groovy. " +
+                    "Loading it anyway."
+        }
 		grails.config.locations << "file:${filePath}"
-	} else {
 	}
 }
 String bashSafeEnvAppName = appName.toString().toUpperCase(Locale.ENGLISH).replaceAll(/-/, '_')
@@ -199,10 +178,10 @@ com.recomdata.analysis.genepattern.file.dir = "data"; // Relative to the app roo
 
 com.recomdata.analysis.data.file.dir = "data"; // Relative to the app root "web-app"
 
-// Disclaimer
-StringBuilder disclaimer = new StringBuilder()
-disclaimer.append("<p></p>")
-com.recomdata.disclaimer=disclaimer.toString()
+//StringBuilder disclaimer = new StringBuilder()
+//disclaimer.append("<p></p>")
+//com.recomdata.disclaimer=disclaimer.toString()
+
 
 // customization views
 //com.recomdata.view.studyview='_clinicaltrialdetail'
@@ -210,4 +189,27 @@ com.recomdata.skipdisclaimer=true
 
 grails.spring.bean.packages = []
 
-grails.resources.modules = {}
+
+// Uncomment and edit the following lines to start using Grails encoding & escaping improvements
+
+/* remove this line
+// GSP settings
+grails {
+    views {
+        gsp {
+            encoding = 'UTF-8'
+            htmlcodec = 'xml' // use xml escaping instead of HTML4 escaping
+            codecs {
+                expression = 'html' // escapes values inside null
+                scriptlet = 'none' // escapes output from scriptlets in GSPs
+                taglib = 'none' // escapes output from taglibs
+                staticparts = 'none' // escapes output from static template parts
+            }
+        }
+        // escapes all not-encoded output at final stage of outputting
+        filteringCodecForContentType {
+            //'text/html' = 'html'
+        }
+    }
+}
+remove this line */

@@ -12,7 +12,7 @@
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS    * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * 
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see http://www.gnu.org/licenses/.
  * 
  *
  ******************************************************************/
@@ -56,8 +56,10 @@ class AuthUserController {
 
 	def list = {
 		if (!params.max) {
-			params.max = grailsApplication.config.com.recomdata.admin.paginate.max
-		}
+			//Changed this to use the jQuery dataTable, which includes client side paging/searching
+			//Need to return all user accounts here
+			//params.max = grailsApplication.config.com.recomdata.admin.paginate.max
+			params.max = 999999		}
 		[personList: AuthUser.list(params)]
 	}
 
@@ -105,7 +107,7 @@ class AuthUserController {
 				person.delete()
 				def msg = "$person.userRealName has been deleted."
 				flash.message = msg
-				new AccessLog(username: userName, event:"User Deleted",
+				new AccessLog(username: springSecurityService.getPrincipal().username, event:"User Deleted",
 					eventmessage: msg,
 					accesstime:new Date()).save()
 			}
@@ -129,14 +131,14 @@ class AuthUserController {
 	/**
 	 * Person update action.
 	 */
-	def update = {
-		def person = AuthUser.get(params.id)		
+	def update = {		
+		def person = AuthUser.get(params.id)
 		person.properties = params
 		
-		if(!params.passwd.equals(person.getPersistentValue("passwd")))	{
-			log.info("Password has changed, encrypting new password")	
-			person.passwd = springSecurityService.encodePassword(params.passwd)
-		}
+        if (!params.passwd.equals(person.getPersistentValue("passwd")))	{
+            log.info("Password has changed, encrypting new password")
+            person.passwd = springSecurityService.encodePassword(params.passwd)
+        }
 		
 		def msg = new StringBuilder("${person.username} has been updated.  Changed fields include: ")				
 		def modifiedFieldNames = person.getDirtyPropertyNames()

@@ -12,7 +12,7 @@
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS    * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * 
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see http://www.gnu.org/licenses/.
  * 
  *
  ******************************************************************/
@@ -36,7 +36,9 @@ import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.core.userdetails.UserDetails
-import org.transmart.searchapp.AccessLog;
+import org.transmart.searchapp.AccessLog
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Login Controller
@@ -77,7 +79,7 @@ class LoginController {
 		nocache response
 		
 		def guestAutoLogin = grailsApplication.config.com.recomdata.guestAutoLogin;
-		boolean guestLoginEnabled = ('true'==guestAutoLogin)
+		boolean guestLoginEnabled = (guestAutoLogin == 'true' || guestAutoLogin.is(true))
 		log.info("enabled guest login?: " + guestLoginEnabled);
 		//log.info("request:"+request.getQueryString())
 		boolean forcedFormLogin = request.getQueryString() != null
@@ -99,18 +101,23 @@ class LoginController {
 			}
 
 		// patch for null pointer exception, see JIRA: http://transmartproject.org/jira/browse/TMPSTGSQL-146
-		boolean isLoggedIn = false;
-		try {
-			isLoggedin = springSecurityService.isLoggedIn()
-		} catch (Throwable ignore){}
+		boolean isLoggedIn = springSecurityService.isLoggedIn()
 		
 		if (isLoggedIn) {
 			redirect uri: SpringSecurityUtils.securityConfig.successHandler.defaultTargetUrl
 		} else	{
-			render view: 'auth', model: [postUrl: request.contextPath + SpringSecurityUtils.securityConfig.apf.filterProcessesUrl]
+            render view: 'auth', model: [postUrl: request.contextPath + SpringSecurityUtils.securityConfig.apf.filterProcessesUrl]
 		}
 	}
-		
+
+	/**
+	 * The redirect action for Ajax requests.
+	 */
+	def authAjax = {
+		response.setHeader 'Location', SpringSecurityUtils.securityConfig.auth.ajaxLoginFormUrl
+		response.sendError HttpServletResponse.SC_UNAUTHORIZED
+	}
+
 	/**
 	 * Show denied page.
 	 */
